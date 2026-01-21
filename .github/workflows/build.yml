@@ -1,0 +1,38 @@
+name: Build EXE and APP
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: # 允许你手动点击按钮触发
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest] # 同时打包 Win 和 Mac
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10" # 这里建议选 3.10 或 3.9，兼容性好
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Build with PyInstaller
+      run: |
+        # 注意：把下面的 main.py 改成你真实的入口文件名
+        pyinstaller --name "MyTool" --onefile --windowed --clean main.py
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4 # 更新到了 v4 版本
+      with:
+        name: MyTool-${{ matrix.os }}
+        path: dist/
